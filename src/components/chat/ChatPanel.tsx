@@ -126,9 +126,9 @@ export default function ChatPanel() {
     <div className="flex flex-col h-full bg-white">
       <ChatHeader />
 
-      {/* Messages area with independent scroll */}
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
+      {/* Messages area with ScrollArea component */}
+      <ScrollArea className="flex-1">
+        <div className="space-y-4 p-4">
           {messages.map((message) => (
             <ChatMessage key={message.id} message={message} />
           ))}
