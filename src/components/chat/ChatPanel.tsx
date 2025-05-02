@@ -27,13 +27,14 @@ export default function ChatPanel() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0); // Track current step
   const [isStepTransition, setIsStepTransition] = useState(false);
-  const lastMessageRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const updateCourseMutation = useUpdateCourseStepMutation();
   
   // Function for auto-scrolling when adding new messages
   useEffect(() => {
-    if (lastMessageRef.current) {
-      lastMessageRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
 
@@ -127,22 +128,24 @@ export default function ChatPanel() {
       <ChatHeader />
 
       {/* Messages area with ScrollArea component */}
-      <ScrollArea className="flex-1">
-        <div className="space-y-4 p-4">
-          {messages.map((message) => (
-            <ChatMessage key={message.id} message={message} />
-          ))}
-          
-          {/* Invisible element for scroll reference */}
-          <div ref={lastMessageRef} className="h-0.5" />
+      <div className="flex-1 relative" ref={scrollAreaRef}>
+        <ScrollArea className="h-full absolute inset-0">
+          <div className="space-y-4 p-4">
+            {messages.map((message) => (
+              <ChatMessage key={message.id} message={message} />
+            ))}
+            
+            {/* Invisible element for scroll reference */}
+            <div ref={messagesEndRef} className="h-0.5" />
 
-          {/* Suggestion chips */}
-          <SuggestionChips 
-            suggestions={suggestions}
-            onSuggestionClick={handleSuggestionClick}
-          />
-        </div>
-      </ScrollArea>
+            {/* Suggestion chips */}
+            <SuggestionChips 
+              suggestions={suggestions}
+              onSuggestionClick={handleSuggestionClick}
+            />
+          </div>
+        </ScrollArea>
+      </div>
 
       <ChatInput 
         onSendMessage={handleSendMessage}
