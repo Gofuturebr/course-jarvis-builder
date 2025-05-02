@@ -85,53 +85,53 @@ export const initialCourseData: CourseData = {
   ]
 };
 
-// Definição das perguntas guiadas por etapa
+// Definição das perguntas guiadas por etapa - UPDATED
 export const stepsQuestions = {
   0: { // Perfil do Especialista
     questions: [
       "Qual é sua área de especialização na saúde?",
-      "Qual tema principal você deseja ensinar?",
-      "Quem é o público-alvo ideal para esse curso?"
+      "Qual é o tema principal que você deseja ensinar neste curso?",
+      "Pode me ajudar a definir meu perfil como especialista?"
     ],
     expectations: "Área de especialização, temática principal, público-alvo, habilidades e diferenciais"
   },
   1: { // Análise de Mercado
     questions: [
-      "Quais tendências ou temas atuais se conectam ao seu curso?",
-      "Qual transformação você quer gerar no seu aluno?",
-      "Deseja sugestões de temas baseados nas tendências de mercado?"
+      "Pode mostrar 5 temas que são tendências na minha área?",
+      "Qual transformação prática quero gerar no meu aluno?",
+      "Me ajude a identificar tendências de mercado para o curso"
     ],
     expectations: "Tema do curso, promessa de transformação ('De... Para...'), tendências do mercado"
   },
   2: { // Estrutura do Curso
     questions: [
-      "Como você deseja entregar seu curso? (ex: gravado, ao vivo)",
-      "Quais tipos de conteúdo você quer usar? (ex: vídeo, texto, quiz)",
-      "Qual é o nível de complexidade do curso? (básico, intermediário, avançado)"
+      "Prefiro entregar meu curso gravado, ao vivo ou híbrido?",
+      "Quais tipos de conteúdo quero usar no curso?",
+      "Pode me ajudar a definir a estrutura ideal?"
     ],
     expectations: "Formato principal, tipos de conteúdo, nível do curso"
   },
   3: { // Metodologia
     questions: [
-      "Como você costuma ensinar esse conteúdo na prática?",
-      "Quantas etapas você costuma seguir no seu método? (3, 5, outro)",
-      "Deseja que eu gere uma metodologia com base no seu tema?"
+      "Como organizo meu método de ensino?",
+      "Quantas etapas principais meu método possui?",
+      "Pode me ajudar a estruturar uma metodologia eficaz?"
     ],
     expectations: "Nome da metodologia, número de etapas, estrutura das etapas"
   },
   4: { // Estrutura Modular
     questions: [
-      "Como você dividiria seu conteúdo em partes lógicas?",
-      "Deseja que eu gere uma estrutura com base na sua metodologia?",
-      "Deseja incluir tempo estimado e tipo de conteúdo para cada aula?"
+      "Como dividir o conteúdo em módulos e aulas?",
+      "Pode gerar uma estrutura com títulos para as aulas?",
+      "Preciso de ajuda para organizar os módulos do curso"
     ],
     expectations: "Módulos, capítulos por módulo, aulas por capítulo com detalhes"
   },
   5: { // Visualização Final
     questions: [
-      "Deseja revisar a estrutura final do curso?",
-      "Está satisfeito com o resultado ou deseja ajustar algo?",
-      "Deseja finalizar e publicar o curso agora?"
+      "Gostaria de revisar a estrutura completa do curso",
+      "Estou pronto para publicar ou preciso ajustar algo?",
+      "Me ajude a finalizar o curso para publicação"
     ],
     expectations: "Resumo completo do curso com nome, nível, estrutura e carga horária"
   }

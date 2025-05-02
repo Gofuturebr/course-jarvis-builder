@@ -75,7 +75,7 @@ export const analyzeConversationWithGroq = async (context: ConversationContext):
 
 // Gets specific prompt for each step
 function getStepSpecificPrompt(stepIndex?: number): string {
-  const basePrompt = `Você é um assistente inteligente que ajuda a analisar conversas para identificar informações relevantes para a criação de cursos. 
+  const basePrompt = `Você é um assistente inteligente que ajuda a analisar conversas para identificar informações relevantes para a criação de cursos na área da saúde. 
   Baseado na conversa fornecida, identifique qual etapa do curso está sendo discutida e crie um resumo conciso e estruturado.`;
   
   switch (stepIndex) {
@@ -85,7 +85,7 @@ function getStepSpecificPrompt(stepIndex?: number): string {
       Você está analisando a etapa de "Perfil do Especialista".
       
       Compile e organize as informações sobre:
-      - Área de especialização do autor
+      - Área de especialização do autor na saúde
       - Formação e credenciais relevantes
       - Tema principal do curso
       - Público-alvo definido
@@ -107,9 +107,9 @@ function getStepSpecificPrompt(stepIndex?: number): string {
       Você está analisando a etapa de "Análise de Mercado".
       
       Identifique e organize as informações sobre:
-      - Tendências atuais que se conectam com o perfil do curso
+      - 5 tendências atuais na área da saúde que se conectam com o perfil do curso
       - Tema central escolhido
-      - Transformação pedagógica proposta ("De... Para...")
+      - Transformação pedagógica prática proposta ("De... Para...")
       - Oportunidades de mercado identificadas
       
       O resumo deve conter dados organizados para consulta futura e auxiliar a fundamentar a construção da metodologia.
@@ -167,7 +167,7 @@ function getStepSpecificPrompt(stepIndex?: number): string {
     case 4:
       return `${basePrompt}
       
-      Você está analisando a etapa de "Estrutura Didática (Módulos, Capítulos e Aulas)".
+      Você está analisando a etapa de "Estrutura Modular".
       
       Represente a organização hierárquica completa do curso:
       - Módulos principais
@@ -214,8 +214,8 @@ function getStepSpecificPrompt(stepIndex?: number): string {
       
       As etapas são:
       0: Perfil do Especialista - informações sobre a experiência profissional e especialização do criador do curso, público-alvo, tema principal
-      1: Análise de Mercado - informações sobre tendências, transformação no aluno e demanda de mercado
-      2: Estrutura do Curso - informações sobre formato, tipos de conteúdo e nível de complexidade
+      1: Análise de Mercado - informações sobre 5 tendências, transformação prática no aluno e demanda de mercado
+      2: Estrutura do Curso - informações sobre formato (gravado, ao vivo, híbrido), tipos de conteúdo e nível de complexidade
       3: Metodologia - informações sobre abordagem pedagógica, etapas do método e técnicas de ensino
       4: Estrutura Modular - informações sobre módulos, capítulos e organização do conteúdo
       5: Visualização Final - resumo e finalização do curso
@@ -244,62 +244,57 @@ export const fallbackAnalysis = (context: ConversationContext): Promise<AiUpdate
       
       // Step 0: Expert Profile
       if (lastJarvisResponse.includes("área de especialização") || 
-          lastJarvisResponse.includes("Qual tema principal") || 
-          lastJarvisResponse.includes("Qual é sua principal área") ||
-          lastUserMessage.includes("experiência") || 
-          lastUserMessage.includes("especialista") ||
+          lastJarvisResponse.includes("tema principal") || 
+          lastUserMessage.includes("especialização") || 
+          lastUserMessage.includes("saúde") ||
           lastUserMessage.includes("formação")) {
         stepIndex = 0;
-        summary = `Especialização em ${lastUserMessage}. Tema principal relacionado à área de saúde. Público-alvo a ser definido durante o desenvolvimento do curso.`;
+        summary = `Especialização em ${lastUserMessage.includes("nutri") ? "nutrição" : "saúde"}. Tema principal relacionado à área de ${lastUserMessage.includes("mental") ? "saúde mental" : "saúde"}. Público-alvo a ser definido durante o desenvolvimento do curso.`;
       } 
       // Step 1: Market Analysis
       else if (lastJarvisResponse.includes("tendências") || 
               lastJarvisResponse.includes("transformação") ||
               lastUserMessage.includes("mercado") || 
-              lastUserMessage.includes("demanda") ||
-              lastUserMessage.includes("tendência")) {
+              lastUserMessage.includes("tendência") ||
+              lastUserMessage.includes("transformação")) {
         stepIndex = 1;
-        summary = `Tendências de mercado relacionadas a ${lastUserMessage}. Foco na transformação do aluno de iniciante para profissional capacitado. Oportunidades identificadas no mercado atual.`;
+        summary = `5 Tendências de mercado na área da saúde: 1) Telemedicina, 2) Saúde preventiva, 3) Saúde mental, 4) Nutrição funcional, 5) Bem-estar integrado. Foco na transformação prática do aluno com aplicação imediata do conhecimento.`;
       }
       // Step 2: Course Structure
       else if (lastJarvisResponse.includes("entregar seu curso") || 
               lastJarvisResponse.includes("tipos de conteúdo") ||
-              lastJarvisResponse.includes("nível de complexidade") ||
-              lastUserMessage.includes("formato") || 
-              lastUserMessage.includes("conteúdo") ||
-              lastUserMessage.includes("nível")) {
+              lastUserMessage.includes("gravado") || 
+              lastUserMessage.includes("vídeo") ||
+              lastUserMessage.includes("híbrido")) {
         stepIndex = 2;
-        summary = `Curso em formato ${lastUserMessage.includes("gravado") ? "gravado" : "ao vivo"}. Conteúdo inclui vídeos, textos e exercícios práticos. Nível ${lastUserMessage.includes("avançado") ? "avançado" : lastUserMessage.includes("intermediário") ? "intermediário" : "básico"}.`;
+        summary = `Curso em formato ${lastUserMessage.includes("gravado") ? "gravado" : lastUserMessage.includes("híbrido") ? "híbrido" : "ao vivo"}. Conteúdo inclui vídeos, estudos de caso e exercícios práticos. Nível ${lastUserMessage.includes("avançado") ? "avançado" : lastUserMessage.includes("intermediário") ? "intermediário" : "básico"}.`;
       }
       // Step 3: Methodology
-      else if (lastJarvisResponse.includes("como você costuma ensinar") || 
-              lastJarvisResponse.includes("quantas etapas") ||
-              lastJarvisResponse.includes("metodologia") ||
+      else if (lastJarvisResponse.includes("método de ensino") || 
+              lastJarvisResponse.includes("etapas principais") ||
               lastUserMessage.includes("método") || 
               lastUserMessage.includes("etapas") ||
-              lastUserMessage.includes("ensinar")) {
+              lastUserMessage.includes("metodologia")) {
         stepIndex = 3;
-        summary = `Metodologia baseada em ${lastUserMessage.includes("5") ? "5" : lastUserMessage.includes("3") ? "3" : "4"} etapas principais. Abordagem prática com foco na aplicação do conhecimento. Método personalizado de ensino.`;
+        summary = `Metodologia baseada em ${lastUserMessage.includes("5") ? "5" : lastUserMessage.includes("3") ? "3" : "4"} etapas principais. Abordagem prática com foco na aplicação do conhecimento. Método personalizado com etapas sequenciais e lógicas para o aprendizado progressivo.`;
       }
       // Step 4: Modular Structure
-      else if (lastJarvisResponse.includes("dividiria seu conteúdo") || 
-              lastJarvisResponse.includes("estrutura") ||
-              lastJarvisResponse.includes("módulos") ||
+      else if (lastJarvisResponse.includes("dividiria o conteúdo") || 
+              lastJarvisResponse.includes("módulos e aulas") ||
               lastUserMessage.includes("módulo") || 
               lastUserMessage.includes("aula") ||
-              lastUserMessage.includes("capítulo")) {
+              lastUserMessage.includes("estrutura")) {
         stepIndex = 4;
-        summary = `Estrutura modular com ${lastUserMessage.includes("4") ? "4" : "3"} módulos principais. Cada módulo contém capítulos e aulas organizados de forma lógica. Conteúdo distribuído por tópicos com tempo estimado para cada aula.`;
+        summary = `Estrutura modular com ${lastUserMessage.includes("4") ? "4" : "3"} módulos principais. Cada módulo contém capítulos e aulas organizados progressivamente. Aulas com duração média de 15-20 minutos e conteúdos práticos para aplicação imediata.`;
       }
       // Step 5: Final Visualization
-      else if (lastJarvisResponse.includes("revisar a estrutura final") || 
-              lastJarvisResponse.includes("satisfeito") ||
-              lastJarvisResponse.includes("finalizar e publicar") ||
-              lastUserMessage.includes("finalizar") || 
+      else if (lastJarvisResponse.includes("revisar a estrutura") || 
+              lastJarvisResponse.includes("pronto para publicar") ||
+              lastUserMessage.includes("revisar") || 
               lastUserMessage.includes("publicar") ||
-              lastUserMessage.includes("concluir")) {
+              lastUserMessage.includes("finalizar")) {
         stepIndex = 5;
-        summary = `Curso completo estruturado e pronto para publicação. Resumo dos módulos, capítulos e aulas definidos. Carga horária total estimada em 40 horas.`;
+        summary = `Curso completo estruturado na área da saúde, pronto para publicação. Estrutura de módulos definida com metodologia clara e aulas práticas. Carga horária total estimada em 20 horas com certificação para os alunos.`;
       }
       
       resolve({

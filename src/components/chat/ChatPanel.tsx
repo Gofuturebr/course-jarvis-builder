@@ -20,7 +20,7 @@ export default function ChatPanel() {
     {
       id: "welcome-message",
       role: "jarvis",
-      content: "Olá! Sou o Jarvis, seu assistente para criar cursos incríveis. Vamos começar falando sobre sua experiência profissional. Qual é sua principal área de atuação?",
+      content: "Olá! Sou o Jarvis, seu assistente para criar cursos incríveis na área de saúde. Vamos começar pelo seu perfil profissional. Qual é sua área de especialização na saúde?",
       timestamp: new Date(),
     },
   ]);
