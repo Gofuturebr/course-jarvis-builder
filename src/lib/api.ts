@@ -1,6 +1,5 @@
-
 import { AiUpdateResponse, ConversationContext, CourseData, initialCourseData } from "@/types";
-import { env, setGroqApiKey } from "./env";
+import { env } from "./env";
 
 // Function to call the GROQ API
 const callGroqAPI = async (context: ConversationContext): Promise<AiUpdateResponse> => {
@@ -8,13 +7,15 @@ const callGroqAPI = async (context: ConversationContext): Promise<AiUpdateRespon
     // In production, this would be handled by a secure backend service
     // This direct API call from frontend is just for demonstration purposes
     
-    // For security, the API key should be stored securely and not in frontend code
+    // Get API key from environment variable
     const apiKey = env.GROQ_API_KEY;
     
     if (!apiKey) {
-      console.error("API key not found. Please set your GROQ API key.");
+      console.error("API key not found. Please set your GROQ API key in .env file as VITE_GROQ_API_KEY.");
       throw new Error("Missing GROQ API key");
     }
+    
+    console.log("Calling GROQ API...");
     
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -64,11 +65,14 @@ const callGroqAPI = async (context: ConversationContext): Promise<AiUpdateRespon
     });
 
     if (!response.ok) {
-      console.error("Erro na resposta da API GROQ:", await response.text());
-      throw new Error(`Erro na chamada da API GROQ: ${response.status}`);
+      const errorText = await response.text();
+      console.error("Erro na resposta da API GROQ:", errorText);
+      throw new Error(`Erro na chamada da API GROQ: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log("GROQ API response:", data);
+    
     const content = data.choices[0].message.content;
     
     try {
@@ -199,7 +203,7 @@ export const fetchCourseData = async (): Promise<CourseData> => {
   return { ...initialCourseData };
 };
 
-// Utility function to set the GROQ API Key
+// Utility function to set the GROQ API Key - no longer used with .env approach
 export const setApiKey = (key: string): void => {
-  setGroqApiKey(key);
+  console.warn('setApiKey is deprecated when using .env files');
 };

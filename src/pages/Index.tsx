@@ -3,11 +3,10 @@ import { useState } from "react";
 import ChatPanel from "@/components/ChatPanel";
 import CourseVisualizationPanel from "@/components/CourseVisualizationPanel";
 import ApiKeyForm from "@/components/ApiKeyForm";
-import { env } from "@/lib/env";
 
 export default function Index() {
   const [updatingStepId, setUpdatingStepId] = useState<number | null>(null);
-  const hasApiKey = Boolean(env.GROQ_API_KEY);
+  const hasApiKey = Boolean(import.meta.env.VITE_GROQ_API_KEY);
 
   return (
     <div className="flex h-screen w-full overflow-hidden">

@@ -1,52 +1,24 @@
 
-import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { env, setGroqApiKey } from '@/lib/env';
+import React from 'react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const ApiKeyForm = () => {
-  const [apiKey, setApiKey] = useState(env.GROQ_API_KEY || '');
-  const [isVisible, setIsVisible] = useState(false);
-  
-  const handleSave = () => {
-    setGroqApiKey(apiKey);
-    // Reload to apply the new key
-    window.location.reload();
-  };
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+  const hasApiKey = Boolean(apiKey);
+
+  if (hasApiKey) {
+    return null; // Don't show anything if we have an API key
+  }
 
   return (
-    <div className="bg-white border rounded-md p-4 mb-4">
-      <h3 className="text-md font-medium mb-2">Configuração de API</h3>
-      <div className="flex items-center space-x-2">
-        <div className="flex-1">
-          <Input
-            type={isVisible ? "text" : "password"}
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="Insira a chave da API GROQ"
-            className="w-full"
-          />
-        </div>
-        <Button 
-          type="button"
-          variant="outline"
-          onClick={() => setIsVisible(!isVisible)}
-          className="whitespace-nowrap"
-        >
-          {isVisible ? "Ocultar" : "Mostrar"}
-        </Button>
-        <Button 
-          type="button"
-          onClick={handleSave}
-          className="whitespace-nowrap"
-        >
-          Salvar
-        </Button>
-      </div>
-      <p className="text-xs text-gray-500 mt-2">
-        Nota: A chave da API é armazenada localmente no seu navegador.
-      </p>
-    </div>
+    <Alert variant="destructive" className="mb-4">
+      <AlertCircle className="h-4 w-4" />
+      <AlertTitle>API Key Missing</AlertTitle>
+      <AlertDescription>
+        Please add your GROQ API key to the .env file as VITE_GROQ_API_KEY.
+      </AlertDescription>
+    </Alert>
   );
 };
 

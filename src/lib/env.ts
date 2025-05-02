@@ -5,22 +5,13 @@
  * This is a temporary solution for development purposes
  */
 
-// Check if there's a stored API key
-const getStoredApiKey = (): string => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('groq_api_key') || '';
-  }
-  return '';
-};
-
 // Environment configuration
 export const env = {
-  GROQ_API_KEY: getStoredApiKey(),
+  GROQ_API_KEY: import.meta.env.VITE_GROQ_API_KEY || '',
 };
 
-// Function to set the API key and store it in localStorage
+// Function to set the API key (no longer used with .env approach)
 export const setGroqApiKey = (key: string): void => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('groq_api_key', key);
-  }
+  console.warn('setGroqApiKey is deprecated when using .env files');
 };
+
