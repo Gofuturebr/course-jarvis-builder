@@ -4,6 +4,7 @@ import { useUpdateCourseStepMutation } from "@/hooks/useCourseData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowRight, Bot, Lightbulb, User, Menu, Send } from "lucide-react";
 import { Message, ConversationContext, stepsQuestions } from "@/types";
 import { v4 as uuidv4 } from "uuid";
@@ -47,11 +48,8 @@ export default function ChatPanel() {
   const [inputValue, setInputValue] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0); // Track current step
-  const chatContainerRef = useRef<HTMLDivElement>(null);
-  const updateCourseMutation = useUpdateCourseStepMutation();
-  
-  // Reference for the chat background element for scrolling
   const lastMessageRef = useRef<HTMLDivElement>(null);
+  const updateCourseMutation = useUpdateCourseStepMutation();
   
   // Function for auto-scrolling when adding new messages
   useEffect(() => {
@@ -167,38 +165,37 @@ export default function ChatPanel() {
         </div>
       </header>
 
-      {/* Messages area */}
-      <div 
-        ref={chatContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide"
-      >
-        {messages.map((message) => (
-          <ChatMessage key={message.id} message={message} />
-        ))}
-        
-        {/* Invisible element for scroll reference */}
-        <div ref={lastMessageRef} />
+      {/* Messages area with independent scroll */}
+      <ScrollArea className="flex-1 p-4">
+        <div className="space-y-4">
+          {messages.map((message) => (
+            <ChatMessage key={message.id} message={message} />
+          ))}
+          
+          {/* Invisible element for scroll reference */}
+          <div ref={lastMessageRef} className="h-0.5" />
 
-        {/* Suggestion chips */}
-        <div className="pt-2">
-          <div className="flex items-center gap-1 mb-2 text-sm text-gray-500">
-            <Lightbulb size={16} />
-            <span>Sugestões para esta etapa:</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {suggestions.map((suggestion, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                className="text-sm rounded-full py-1 h-auto border-jarvis-dark text-jarvis-foreground hover:bg-jarvis-light"
-                onClick={() => setInputValue(suggestion)}
-              >
-                {suggestion}
-              </Button>
-            ))}
+          {/* Suggestion chips */}
+          <div className="pt-2">
+            <div className="flex items-center gap-1 mb-2 text-sm text-gray-500">
+              <Lightbulb size={16} />
+              <span>Sugestões para esta etapa:</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {suggestions.map((suggestion, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  className="text-sm rounded-full py-1 h-auto border-jarvis-dark text-jarvis-foreground hover:bg-jarvis-light"
+                  onClick={() => setInputValue(suggestion)}
+                >
+                  {suggestion}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </ScrollArea>
 
       {/* Message input */}
       <div className="p-4 border-t">
