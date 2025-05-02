@@ -1,15 +1,20 @@
 
 import { AiUpdateResponse, ConversationContext, CourseData, initialCourseData } from "@/types";
+import { env, setGroqApiKey } from "./env";
 
 // Function to call the GROQ API
 const callGroqAPI = async (context: ConversationContext): Promise<AiUpdateResponse> => {
   try {
     // In production, this would be handled by a secure backend service
     // This direct API call from frontend is just for demonstration purposes
-    // NEVER include API keys directly in frontend code in production!
     
-    // For security, the API key should be stored in environment variables on your backend
-    const apiKey = ""; // Remove the actual key for security
+    // For security, the API key should be stored securely and not in frontend code
+    const apiKey = env.GROQ_API_KEY;
+    
+    if (!apiKey) {
+      console.error("API key not found. Please set your GROQ API key.");
+      throw new Error("Missing GROQ API key");
+    }
     
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -86,13 +91,7 @@ export const updateCourseStep = async (
 ): Promise<AiUpdateResponse> => {
   console.log("Enviando contexto para API:", context);
   
-  // Em um ambiente real de produção, você deveria:
-  // 1. Enviar o contexto para seu backend
-  // 2. O backend usaria a API key da GROQ armazenada com segurança
-  // 3. O backend chamaria a API GROQ e retornaria o resultado
-  
   try {
-    // Simulação removida - agora chamamos a API real
     return await callGroqAPI(context);
   } catch (error) {
     console.error("Erro ao processar atualização do curso:", error);
@@ -153,4 +152,9 @@ export const fetchCourseData = async (): Promise<CourseData> => {
   
   // Se não houver dados salvos ou ocorrer um erro, retorna os dados iniciais
   return { ...initialCourseData };
+};
+
+// Utility function to set the GROQ API Key
+export const setApiKey = (key: string): void => {
+  setGroqApiKey(key);
 };
