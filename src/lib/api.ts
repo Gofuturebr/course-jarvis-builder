@@ -1,5 +1,5 @@
 
-import { AiUpdateResponse, ConversationContext, CourseData } from "@/types";
+import { AiUpdateResponse, ConversationContext, CourseData, initialCourseData } from "@/types";
 
 // Esta é uma simulação do backend. Em um ambiente real, esta função
 // faria uma chamada de API para um servidor que integraria com a API Groq
