@@ -9,6 +9,7 @@ export const updateCourseStep = async (
   console.log("Enviando contexto para API:", context);
   
   try {
+    // Use the enhanced Groq integration with step-specific prompts
     return await analyzeConversationWithGroq(context);
   } catch (error) {
     console.error("Erro ao processar atualização do curso:", error);

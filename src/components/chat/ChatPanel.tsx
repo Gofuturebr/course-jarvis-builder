@@ -57,11 +57,14 @@ export default function ChatPanel() {
       
       setMessages(prev => [...prev, jarvisMessage]);
       
-      // Prepare context for updating course data
+      // Get the most recent messages for better context
+      const recentMessages = contextMessages.slice(-6); // Last 6 messages for context
+      
+      // Prepare context for updating course data with enhanced information
       const context: ConversationContext = {
         lastUserMessage: userMessage.content,
         lastJarvisResponse: jarvisResponse,
-        recentHistory: [userMessage, jarvisMessage],
+        recentHistory: [...recentMessages, jarvisMessage],
         currentStepIndex: currentStepIndex
       };
       

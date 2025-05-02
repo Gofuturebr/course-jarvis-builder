@@ -15,6 +15,9 @@ export const analyzeConversationWithGroq = async (context: ConversationContext):
     
     console.log("Calling GROQ API with conversation context:", context);
     
+    // Generate a specific system prompt based on the step index
+    const systemPrompt = getStepSpecificPrompt(context.currentStepIndex);
+    
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -22,28 +25,11 @@ export const analyzeConversationWithGroq = async (context: ConversationContext):
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "llama3-8b-8192", // Updated to an available model
+        model: "llama3-8b-8192",
         messages: [
           {
             role: "system",
-            content: `Você é um assistente inteligente que ajuda a analisar conversas para identificar informações relevantes para a criação de cursos. 
-            Baseado na conversa fornecida, identifique qual etapa do curso está sendo discutida e crie um resumo conciso.
-            
-            As etapas são:
-            0: Perfil do Especialista - informações sobre a experiência profissional e especialização do criador do curso, público-alvo, tema principal
-            1: Análise de Mercado - informações sobre tendências, transformação no aluno e demanda de mercado
-            2: Estrutura do Curso - informações sobre formato, tipos de conteúdo e nível de complexidade
-            3: Metodologia - informações sobre abordagem pedagógica, etapas do método e técnicas de ensino
-            4: Estrutura Modular - informações sobre módulos, capítulos e organização do conteúdo
-            5: Visualização Final - resumo e finalização do curso
-            
-            Responda APENAS com um objeto JSON no seguinte formato:
-            {
-              "stepIndex": número da etapa (0-5) ou null se não for possível identificar,
-              "updateData": {
-                "summary": resumo conciso da etapa (máximo 100 palavras)
-              }
-            }`
+            content: systemPrompt
           },
           {
             role: "user",
@@ -53,7 +39,7 @@ export const analyzeConversationWithGroq = async (context: ConversationContext):
             
             Última resposta do assistente: "${context.lastJarvisResponse || ''}"
             
-            Por favor, identifique a etapa relevante e gere um resumo adequado.`
+            Por favor, analise esta conversa e gere um resumo estruturado para a etapa ${context.currentStepIndex}.`
           }
         ],
         temperature: 0.2,
@@ -86,6 +72,163 @@ export const analyzeConversationWithGroq = async (context: ConversationContext):
     return { stepIndex: null, updateData: null };
   }
 };
+
+// Gets specific prompt for each step
+function getStepSpecificPrompt(stepIndex?: number): string {
+  const basePrompt = `Você é um assistente inteligente que ajuda a analisar conversas para identificar informações relevantes para a criação de cursos. 
+  Baseado na conversa fornecida, identifique qual etapa do curso está sendo discutida e crie um resumo conciso e estruturado.`;
+  
+  switch (stepIndex) {
+    case 0:
+      return `${basePrompt}
+      
+      Você está analisando a etapa de "Perfil do Especialista".
+      
+      Compile e organize as informações sobre:
+      - Área de especialização do autor
+      - Formação e credenciais relevantes
+      - Tema principal do curso
+      - Público-alvo definido
+      - Experiência profissional relevante
+      
+      O resumo deve ser estruturado, reutilizável e exportável para as próximas etapas. Ele também poderá servir como base para a biografia pública do autor na plataforma.
+      
+      Responda APENAS com um objeto JSON no seguinte formato:
+      {
+        "stepIndex": 0,
+        "updateData": {
+          "summary": resumo estruturado (máximo 100 palavras)
+        }
+      }`;
+      
+    case 1:
+      return `${basePrompt}
+      
+      Você está analisando a etapa de "Análise de Mercado".
+      
+      Identifique e organize as informações sobre:
+      - Tendências atuais que se conectam com o perfil do curso
+      - Tema central escolhido
+      - Transformação pedagógica proposta ("De... Para...")
+      - Oportunidades de mercado identificadas
+      
+      O resumo deve conter dados organizados para consulta futura e auxiliar a fundamentar a construção da metodologia.
+      
+      Responda APENAS com um objeto JSON no seguinte formato:
+      {
+        "stepIndex": 1,
+        "updateData": {
+          "summary": resumo estruturado (máximo 100 palavras)
+        }
+      }`;
+      
+    case 2:
+      return `${basePrompt}
+      
+      Você está analisando a etapa de "Estrutura do Curso".
+      
+      Registre de forma clara:
+      - Modelo pedagógico escolhido (gravado, ao vivo ou híbrido)
+      - Tipos de conteúdo a serem utilizados (vídeos, quizzes, textos, etc.)
+      - Nível de profundidade do curso (básico, intermediário, avançado)
+      
+      Esse resumo é essencial para orientar a criação das aulas e validar a coerência da experiência de aprendizagem.
+      
+      Responda APENAS com um objeto JSON no seguinte formato:
+      {
+        "stepIndex": 2,
+        "updateData": {
+          "summary": resumo estruturado (máximo 100 palavras)
+        }
+      }`;
+      
+    case 3:
+      return `${basePrompt}
+      
+      Você está analisando a etapa de "Metodologia".
+      
+      Traduza a forma de ensinar do especialista em:
+      - Conjunto sequencial de etapas personalizadas
+      - Nomes das etapas metodológicas
+      - Objetivos de cada etapa
+      - Importância pedagógica
+      - Orientações práticas
+      
+      O resumo deve estar em formato editável e reutilizável, servindo como espinha dorsal da estrutura lógica do curso.
+      
+      Responda APENAS com um objeto JSON no seguinte formato:
+      {
+        "stepIndex": 3,
+        "updateData": {
+          "summary": resumo estruturado (máximo 100 palavras)
+        }
+      }`;
+      
+    case 4:
+      return `${basePrompt}
+      
+      Você está analisando a etapa de "Estrutura Didática (Módulos, Capítulos e Aulas)".
+      
+      Represente a organização hierárquica completa do curso:
+      - Módulos principais
+      - Capítulos em cada módulo
+      - Aulas em cada capítulo
+      - Títulos, sequenciamento e tipo de conteúdo
+      - Tempo estimado por aula
+      
+      Essa estrutura serve como roteiro pedagógico e blueprint técnico para apresentação do curso.
+      
+      Responda APENAS com um objeto JSON no seguinte formato:
+      {
+        "stepIndex": 4,
+        "updateData": {
+          "summary": resumo estruturado (máximo 100 palavras)
+        }
+      }`;
+      
+    case 5:
+      return `${basePrompt}
+      
+      Você está analisando a etapa de "Visualização Final".
+      
+      Consolide todas as decisões tomadas ao longo do processo de criação:
+      - Nome e nível do curso
+      - Perfil do instrutor
+      - Público-alvo
+      - Metodologia utilizada
+      - Estrutura modular completa
+      - Carga horária total
+      
+      Esse resumo deve servir tanto para revisão do autor quanto para exportação e publicação no catálogo de cursos.
+      
+      Responda APENAS com um objeto JSON no seguinte formato:
+      {
+        "stepIndex": 5,
+        "updateData": {
+          "summary": resumo estruturado (máximo 100 palavras)
+        }
+      }`;
+      
+    default:
+      return `${basePrompt}
+      
+      As etapas são:
+      0: Perfil do Especialista - informações sobre a experiência profissional e especialização do criador do curso, público-alvo, tema principal
+      1: Análise de Mercado - informações sobre tendências, transformação no aluno e demanda de mercado
+      2: Estrutura do Curso - informações sobre formato, tipos de conteúdo e nível de complexidade
+      3: Metodologia - informações sobre abordagem pedagógica, etapas do método e técnicas de ensino
+      4: Estrutura Modular - informações sobre módulos, capítulos e organização do conteúdo
+      5: Visualização Final - resumo e finalização do curso
+      
+      Responda APENAS com um objeto JSON no seguinte formato:
+      {
+        "stepIndex": número da etapa (0-5) ou null se não for possível identificar,
+        "updateData": {
+          "summary": resumo conciso e estruturado da etapa (máximo 100 palavras)
+        }
+      }`;
+  }
+}
 
 // Fallback analysis if API fails
 export const fallbackAnalysis = (context: ConversationContext): Promise<AiUpdateResponse> => {
