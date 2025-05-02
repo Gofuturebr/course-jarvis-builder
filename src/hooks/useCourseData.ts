@@ -32,7 +32,7 @@ export const useUpdateCourseStepMutation = () => {
             return step;
           });
 
-          // Calcular novo progresso
+          // Calculate new progress
           const definedSteps = updatedSteps.filter(step => step.isDefined).length;
           const progress = Math.round((definedSteps / updatedSteps.length) * 100);
 
@@ -42,7 +42,7 @@ export const useUpdateCourseStepMutation = () => {
             progress,
           };
 
-          // Persistir dados atualizados
+          // Persist updated data
           saveCourseData(updatedData);
 
           return updatedData;
@@ -93,7 +93,7 @@ export const useManualUpdateCourseMutation = () => {
           return step;
         });
 
-        // Calcular novo progresso
+        // Calculate new progress
         const definedSteps = updatedSteps.filter(step => step.isDefined).length;
         const progress = Math.round((definedSteps / updatedSteps.length) * 100);
 
@@ -103,7 +103,7 @@ export const useManualUpdateCourseMutation = () => {
           progress,
         };
 
-        // Persistir dados atualizados
+        // Persist updated data
         saveCourseData(updatedData);
 
         return updatedData;

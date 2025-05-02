@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { ArrowRight, Bot, Lightbulb, User, Menu, Send } from "lucide-react";
-import { Message, ConversationContext } from "@/types";
+import { Message, ConversationContext, stepsQuestions } from "@/types";
 import { v4 as uuidv4 } from "uuid";
+import { toast } from "@/hooks/use-toast";
 
 function ChatMessage({ message }: { message: Message }) {
   return (
@@ -45,41 +46,45 @@ export default function ChatPanel() {
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0); // Track current step
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const updateCourseMutation = useUpdateCourseStepMutation();
   
-  // Referência para o elemento de fundo do chat para rolagem
+  // Reference for the chat background element for scrolling
   const lastMessageRef = useRef<HTMLDivElement>(null);
   
-  // Função para auto-rolagem ao adicionar novas mensagens
+  // Function for auto-scrolling when adding new messages
   useEffect(() => {
     if (lastMessageRef.current) {
       lastMessageRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
 
-  // Simula uma resposta do Jarvis
+  // Generate dynamic questions based on current step
+  const getNextQuestion = (step: number, userMessage: string): string => {
+    const currentStep = stepsQuestions[step as keyof typeof stepsQuestions];
+    if (!currentStep) return "Poderia me falar mais sobre isso?";
+    
+    // Simple logic to choose next question
+    const questionIndex = userMessage.length % currentStep.questions.length;
+    return currentStep.questions[questionIndex];
+  };
+
+  // Simulate a response from Jarvis based on current step
   const simulateJarvisResponse = (userMessage: string): Promise<string> => {
     return new Promise((resolve) => {
       setTimeout(() => {
-        // Resposta baseada na entrada do usuário
-        if (userMessage.toLowerCase().includes("fisioterapeuta") || 
-            userMessage.toLowerCase().includes("reabilitação")) {
-          resolve("Excelente! E qual conhecimento específico você gostaria de compartilhar em seu curso? Pode me contar sobre suas principais competências na área de reabilitação esportiva?");
-        } else if (userMessage.toLowerCase().includes("competência") || 
-                  userMessage.toLowerCase().includes("conhecimento")) {
-          resolve("Ótimo! Vamos agora analisar o mercado e o público-alvo para o seu curso. Você tem uma ideia de quem seria seu público principal?");
-        } else {
-          resolve("Entendi! Isso é muito interessante. Vamos avançar um pouco mais. Poderia me falar sobre o formato que você imagina para o seu curso? Pense em aspectos como duração, complexidade e tipo de entrega.");
-        }
-      }, 1500);
+        // Generate next question based on current step
+        const response = getNextQuestion(currentStepIndex, userMessage);
+        resolve(response);
+      }, 1000);
     });
   };
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isProcessing) return;
     
-    // Adiciona a mensagem do usuário ao chat
+    // Add the user message to the chat
     const userMessage: Message = {
       id: uuidv4(),
       content: inputValue,
@@ -92,10 +97,10 @@ export default function ChatPanel() {
     setIsProcessing(true);
     
     try {
-      // Simula resposta do Jarvis
+      // Simulate Jarvis response
       const jarvisResponse = await simulateJarvisResponse(userMessage.content);
       
-      // Adiciona a resposta do Jarvis ao chat
+      // Add Jarvis response to the chat
       const jarvisMessage: Message = {
         id: uuidv4(),
         content: jarvisResponse,
@@ -105,33 +110,53 @@ export default function ChatPanel() {
       
       setMessages(prev => [...prev, jarvisMessage]);
       
-      // Prepara o contexto para atualizar os dados do curso
+      // Prepare context for updating course data
       const context: ConversationContext = {
         lastUserMessage: userMessage.content,
         lastJarvisResponse: jarvisResponse,
         recentHistory: [userMessage, jarvisMessage],
+        currentStepIndex: currentStepIndex
       };
       
-      // Chama a mutação para atualizar os dados do curso
-      updateCourseMutation.mutate(context);
+      // Call mutation to update course data
+      updateCourseMutation.mutate(context, {
+        onSuccess: (data) => {
+          if (data.stepIndex !== null && data.stepIndex !== currentStepIndex) {
+            // Update current step if changed
+            setCurrentStepIndex(data.stepIndex);
+          }
+        }
+      });
       
     } catch (error) {
       console.error("Erro ao processar mensagem:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível processar sua mensagem. Tente novamente.",
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Suggestion chips for the chat
-  const suggestions = [
-    "Tenho experiência em fisioterapia esportiva",
-    "Meu público-alvo são profissionais de saúde",
-    "Quero um curso prático com estudos de caso"
-  ];
+  // Suggestion chips for the chat based on current step
+  const getSuggestions = () => {
+    const currentStep = stepsQuestions[currentStepIndex as keyof typeof stepsQuestions];
+    if (!currentStep) return [];
+    
+    // Generate simple suggestions based on questions
+    return currentStep.questions.map(q => {
+      const suggestion = q.replace(/[?]/g, '').substring(0, 30);
+      return suggestion.length > 25 ? `${suggestion}...` : suggestion;
+    });
+  };
+
+  const suggestions = getSuggestions();
 
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* Header com branding */}
+      {/* Header with branding */}
       <header className="flex items-center px-4 py-3 border-b">
         <Menu className="mr-3 h-5 w-5 text-gray-600" />
         <div className="flex items-center">
@@ -142,7 +167,7 @@ export default function ChatPanel() {
         </div>
       </header>
 
-      {/* Área de mensagens */}
+      {/* Messages area */}
       <div 
         ref={chatContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide"
@@ -151,33 +176,31 @@ export default function ChatPanel() {
           <ChatMessage key={message.id} message={message} />
         ))}
         
-        {/* Elemento invisível para referência de rolagem */}
+        {/* Invisible element for scroll reference */}
         <div ref={lastMessageRef} />
 
         {/* Suggestion chips */}
-        {messages.length === 1 && (
-          <div className="pt-2">
-            <div className="flex items-center gap-1 mb-2 text-sm text-gray-500">
-              <Lightbulb size={16} />
-              <span>Ver sugestões de tópicos populares</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {suggestions.map((suggestion, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  className="text-sm rounded-full py-1 h-auto border-jarvis-dark text-jarvis-foreground hover:bg-jarvis-light"
-                  onClick={() => setInputValue(suggestion)}
-                >
-                  {suggestion}
-                </Button>
-              ))}
-            </div>
+        <div className="pt-2">
+          <div className="flex items-center gap-1 mb-2 text-sm text-gray-500">
+            <Lightbulb size={16} />
+            <span>Sugestões para esta etapa:</span>
           </div>
-        )}
+          <div className="flex flex-wrap gap-2">
+            {suggestions.map((suggestion, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                className="text-sm rounded-full py-1 h-auto border-jarvis-dark text-jarvis-foreground hover:bg-jarvis-light"
+                onClick={() => setInputValue(suggestion)}
+              >
+                {suggestion}
+              </Button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Input de mensagem */}
+      {/* Message input */}
       <div className="p-4 border-t">
         <div className="flex items-center gap-2">
           <Input

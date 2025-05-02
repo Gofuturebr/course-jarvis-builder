@@ -1,12 +1,10 @@
+
 import { AiUpdateResponse, ConversationContext, CourseData, initialCourseData } from "@/types";
 import { env } from "./env";
 
 // Function to call the GROQ API
 const callGroqAPI = async (context: ConversationContext): Promise<AiUpdateResponse> => {
   try {
-    // In production, this would be handled by a secure backend service
-    // This direct API call from frontend is just for demonstration purposes
-    
     // Get API key from environment variable
     const apiKey = env.GROQ_API_KEY;
     
@@ -15,7 +13,7 @@ const callGroqAPI = async (context: ConversationContext): Promise<AiUpdateRespon
       throw new Error("Missing GROQ API key");
     }
     
-    console.log("Calling GROQ API...");
+    console.log("Calling GROQ API with conversation context:", context);
     
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -24,7 +22,7 @@ const callGroqAPI = async (context: ConversationContext): Promise<AiUpdateRespon
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "llama-3.1-8b", // Updated to a supported model
+        model: "llama3-8b-8192", // Updated to an available model
         messages: [
           {
             role: "system",
@@ -89,7 +87,7 @@ const callGroqAPI = async (context: ConversationContext): Promise<AiUpdateRespon
   }
 };
 
-// Esta função agora usa o GROQ API para análise do contexto e geração de resposta
+// This function now uses the GROQ API for context analysis and response generation
 export const updateCourseStep = async (
   context: ConversationContext
 ): Promise<AiUpdateResponse> => {
@@ -100,18 +98,18 @@ export const updateCourseStep = async (
   } catch (error) {
     console.error("Erro ao processar atualização do curso:", error);
     
-    // Fallback para a simulação anterior em caso de erro
+    // Fallback if API fails
     return new Promise((resolve) => {
       setTimeout(() => {
-        // Analisar o último contexto para determinar qual etapa atualizar
+        // Analyze last context to determine which step to update
         const lastUserMessage = context.lastUserMessage || '';
         const lastJarvisResponse = context.lastJarvisResponse || '';
         
-        // Identificar a etapa com base no conteúdo da mensagem
+        // Identify step based on message content
         let stepIndex: number | null = null;
         let summary = "";
         
-        // Etapa 0: Perfil do Especialista
+        // Step 0: Expert Profile
         if (lastJarvisResponse.includes("área de especialização") || 
             lastJarvisResponse.includes("Qual tema principal") || 
             lastJarvisResponse.includes("Qual é sua principal área") ||
@@ -121,7 +119,7 @@ export const updateCourseStep = async (
           stepIndex = 0;
           summary = `Especialização em ${lastUserMessage}. Tema principal relacionado à área de saúde. Público-alvo a ser definido durante o desenvolvimento do curso.`;
         } 
-        // Etapa 1: Análise de Mercado
+        // Step 1: Market Analysis
         else if (lastJarvisResponse.includes("tendências") || 
                 lastJarvisResponse.includes("transformação") ||
                 lastUserMessage.includes("mercado") || 
@@ -130,7 +128,7 @@ export const updateCourseStep = async (
           stepIndex = 1;
           summary = `Tendências de mercado relacionadas a ${lastUserMessage}. Foco na transformação do aluno de iniciante para profissional capacitado. Oportunidades identificadas no mercado atual.`;
         }
-        // Etapa 2: Formato do Curso
+        // Step 2: Course Structure
         else if (lastJarvisResponse.includes("entregar seu curso") || 
                 lastJarvisResponse.includes("tipos de conteúdo") ||
                 lastJarvisResponse.includes("nível de complexidade") ||
@@ -140,7 +138,7 @@ export const updateCourseStep = async (
           stepIndex = 2;
           summary = `Curso em formato ${lastUserMessage.includes("gravado") ? "gravado" : "ao vivo"}. Conteúdo inclui vídeos, textos e exercícios práticos. Nível ${lastUserMessage.includes("avançado") ? "avançado" : lastUserMessage.includes("intermediário") ? "intermediário" : "básico"}.`;
         }
-        // Etapa 3: Metodologia
+        // Step 3: Methodology
         else if (lastJarvisResponse.includes("como você costuma ensinar") || 
                 lastJarvisResponse.includes("quantas etapas") ||
                 lastJarvisResponse.includes("metodologia") ||
@@ -150,7 +148,7 @@ export const updateCourseStep = async (
           stepIndex = 3;
           summary = `Metodologia baseada em ${lastUserMessage.includes("5") ? "5" : lastUserMessage.includes("3") ? "3" : "4"} etapas principais. Abordagem prática com foco na aplicação do conhecimento. Método personalizado de ensino.`;
         }
-        // Etapa 4: Estrutura Modular
+        // Step 4: Modular Structure
         else if (lastJarvisResponse.includes("dividiria seu conteúdo") || 
                 lastJarvisResponse.includes("estrutura") ||
                 lastJarvisResponse.includes("módulos") ||
@@ -160,7 +158,7 @@ export const updateCourseStep = async (
           stepIndex = 4;
           summary = `Estrutura modular com ${lastUserMessage.includes("4") ? "4" : "3"} módulos principais. Cada módulo contém capítulos e aulas organizados de forma lógica. Conteúdo distribuído por tópicos com tempo estimado para cada aula.`;
         }
-        // Etapa 5: Visualização Final
+        // Step 5: Final Visualization
         else if (lastJarvisResponse.includes("revisar a estrutura final") || 
                 lastJarvisResponse.includes("satisfeito") ||
                 lastJarvisResponse.includes("finalizar e publicar") ||
@@ -175,12 +173,12 @@ export const updateCourseStep = async (
           stepIndex,
           updateData: stepIndex !== null ? { summary } : null
         });
-      }, 800); // Simula latência de rede
+      }, 800);
     });
   }
 };
 
-// Funções para persistência local
+// Functions for local persistence
 export const saveCourseData = (data: CourseData): void => {
   try {
     localStorage.setItem('jarvisEduCourseData', JSON.stringify(data));
@@ -199,11 +197,11 @@ export const fetchCourseData = async (): Promise<CourseData> => {
     console.error('Error fetching course data:', error);
   }
   
-  // Se não houver dados salvos ou ocorrer um erro, retorna os dados iniciais
+  // Return initial data if no saved data or error occurs
   return { ...initialCourseData };
 };
 
-// Utility function to set the GROQ API Key - no longer used with .env approach
+// This function is deprecated with .env approach
 export const setApiKey = (key: string): void => {
   console.warn('setApiKey is deprecated when using .env files');
 };
