@@ -9,9 +9,9 @@ import { SuggestionChips } from "./SuggestionChips";
 import { ChatInput } from "./ChatInput";
 import { ChatHeader } from "./ChatHeader";
 import { 
-  createJarvisMessage, 
-  createUserMessage,
-  simulateJarvisResponse,
+  createUserMessage, 
+  createJarvisMessage,
+  processChatWithGroq,
   getSuggestions
 } from "@/utils/chat-utils";
 
@@ -46,12 +46,11 @@ export default function ChatPanel() {
     setIsProcessing(true);
     
     try {
-      // Simulate Jarvis response
-      const jarvisResponse = await simulateJarvisResponse(
-        userMessage.content, 
-        currentStepIndex,
-        stepsQuestions
-      );
+      // Create the array of messages for context (previous messages + new user message)
+      const contextMessages = [...messages, userMessage];
+      
+      // Get response from Groq API
+      const jarvisResponse = await processChatWithGroq(contextMessages);
       
       // Add Jarvis response to the chat
       const jarvisMessage = createJarvisMessage(jarvisResponse);
