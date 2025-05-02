@@ -39,6 +39,9 @@ Etapa 6: Visualização Final
 - Ofereça revisão da estrutura completa antes de finalizar
 - Pergunte se está pronto para publicar ou deseja ajustes
 
+MUITO IMPORTANTE: Ao final de cada etapa, você deve sempre perguntar ao usuário: 
+"Acredito que já temos informações suficientes para esta etapa. Gostaria de revisar ou modificar algo nesta etapa ou podemos avançar para a próxima?"
+
 Sempre ofereça sua ajuda para definir aspectos que o usuário tenha dificuldade.`,
   temperature: 0.7,
   maxTokens: 2000,

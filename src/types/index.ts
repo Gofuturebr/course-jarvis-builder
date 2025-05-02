@@ -93,23 +93,26 @@ export const stepsQuestions = {
       "Qual é o tema principal que você deseja ensinar neste curso?",
       "Pode me ajudar a definir meu perfil como especialista?"
     ],
-    expectations: "Área de especialização, temática principal, público-alvo, habilidades e diferenciais"
+    expectations: "Área de especialização, temática principal, público-alvo, habilidades e diferenciais",
+    showAdvanceOptions: false
   },
   1: { // Análise de Mercado
     questions: [
-      "Pode mostrar 5 temas que são tendências na minha área?",
-      "Qual transformação prática quero gerar no meu aluno?",
+      "Faça uma pesquisa e ofereça 5 temas que são tendências nesse assunto",
+      "Qual transformação prática quero gerar no meu aluno com este curso?",
       "Me ajude a identificar tendências de mercado para o curso"
     ],
-    expectations: "Tema do curso, promessa de transformação ('De... Para...'), tendências do mercado"
+    expectations: "Tema do curso, promessa de transformação ('De... Para...'), tendências do mercado",
+    showAdvanceOptions: false
   },
   2: { // Estrutura do Curso
     questions: [
-      "Prefiro entregar meu curso gravado, ao vivo ou híbrido?",
+      "Como prefiro entregar meu curso? (Gravado, Ao Vivo, Híbrido)",
       "Quais tipos de conteúdo quero usar no curso?",
       "Pode me ajudar a definir a estrutura ideal?"
     ],
-    expectations: "Formato principal, tipos de conteúdo, nível do curso"
+    expectations: "Formato principal, tipos de conteúdo, nível do curso",
+    showAdvanceOptions: false
   },
   3: { // Metodologia
     questions: [
@@ -117,15 +120,17 @@ export const stepsQuestions = {
       "Quantas etapas principais meu método possui?",
       "Pode me ajudar a estruturar uma metodologia eficaz?"
     ],
-    expectations: "Nome da metodologia, número de etapas, estrutura das etapas"
+    expectations: "Nome da metodologia, número de etapas, estrutura das etapas",
+    showAdvanceOptions: false
   },
   4: { // Estrutura Modular
     questions: [
-      "Como dividir o conteúdo em módulos e aulas?",
+      "Como divido o conteúdo em módulos e aulas?",
       "Pode gerar uma estrutura com títulos para as aulas?",
       "Preciso de ajuda para organizar os módulos do curso"
     ],
-    expectations: "Módulos, capítulos por módulo, aulas por capítulo com detalhes"
+    expectations: "Módulos, capítulos por módulo, aulas por capítulo com detalhes",
+    showAdvanceOptions: false
   },
   5: { // Visualização Final
     questions: [
@@ -133,6 +138,7 @@ export const stepsQuestions = {
       "Estou pronto para publicar ou preciso ajustar algo?",
       "Me ajude a finalizar o curso para publicação"
     ],
-    expectations: "Resumo completo do curso com nome, nível, estrutura e carga horária"
+    expectations: "Resumo completo do curso com nome, nível, estrutura e carga horária",
+    showAdvanceOptions: false
   }
 };

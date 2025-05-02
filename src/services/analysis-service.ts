@@ -18,6 +18,45 @@ export const analyzeConversationWithGroq = async (context: ConversationContext):
     // Generate a specific system prompt based on the step index
     const systemPrompt = getStepSpecificPrompt(context.currentStepIndex);
     
+    // Check if we need to determine step transition
+    const lastJarvisResponse = context.lastJarvisResponse || '';
+    const lastUserMessage = context.lastUserMessage || '';
+    
+    // Detect if Jarvis asked about moving to next step and user confirmed
+    const askedToAdvance = lastJarvisResponse.includes("podemos avançar para a próxima") || 
+                          lastJarvisResponse.includes("Gostaria de revisar ou modificar algo");
+    const userWantsToAdvance = askedToAdvance && (
+      lastUserMessage.toLowerCase().includes("sim") ||
+      lastUserMessage.toLowerCase().includes("pode") ||
+      lastUserMessage.toLowerCase().includes("vamos") ||
+      lastUserMessage.toLowerCase().includes("próxim") ||
+      lastUserMessage.toLowerCase().includes("avance") ||
+      lastUserMessage.toLowerCase().includes("avançar") ||
+      !lastUserMessage.toLowerCase().includes("não") // Simplified logic for demo purposes
+    );
+    
+    // Check if user wants to modify current step
+    const userWantsToModify = askedToAdvance && (
+      lastUserMessage.toLowerCase().includes("modifi") ||
+      lastUserMessage.toLowerCase().includes("alterar") ||
+      lastUserMessage.toLowerCase().includes("mudar") ||
+      lastUserMessage.toLowerCase().includes("revisar") ||
+      lastUserMessage.toLowerCase().includes("não") ||
+      lastUserMessage.toLowerCase().includes("não vamos") ||
+      lastUserMessage.toLowerCase().includes("quero mudar")
+    );
+    
+    // Determine next step index (if user confirmed advancing)
+    let targetStepIndex = context.currentStepIndex;
+    if (userWantsToAdvance && context.currentStepIndex !== undefined && context.currentStepIndex < 5) {
+      targetStepIndex = context.currentStepIndex + 1;
+    }
+    
+    // Don't advance step if user wants to modify current one
+    if (userWantsToModify) {
+      targetStepIndex = context.currentStepIndex;
+    }
+    
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -39,7 +78,9 @@ export const analyzeConversationWithGroq = async (context: ConversationContext):
             
             Última resposta do assistente: "${context.lastJarvisResponse || ''}"
             
-            Por favor, analise esta conversa e gere um resumo estruturado para a etapa ${context.currentStepIndex}.`
+            Contexto adicional: ${userWantsToAdvance ? "O usuário quer avançar para a próxima etapa." : userWantsToModify ? "O usuário quer modificar a etapa atual." : "Ainda estamos na mesma etapa."} 
+            
+            Por favor, analise esta conversa e gere um resumo estruturado para a etapa ${targetStepIndex}.`
           }
         ],
         temperature: 0.2,
@@ -62,6 +103,12 @@ export const analyzeConversationWithGroq = async (context: ConversationContext):
     try {
       // Parse the JSON content from the API response
       const parsedContent = JSON.parse(content);
+      
+      // If we detected a step transition, override the step index
+      if (userWantsToAdvance && context.currentStepIndex !== undefined && context.currentStepIndex < 5) {
+        parsedContent.stepIndex = targetStepIndex;
+      }
+      
       return parsedContent;
     } catch (parseError) {
       console.error("Erro ao parsear resposta da API:", parseError);
@@ -238,63 +285,100 @@ export const fallbackAnalysis = (context: ConversationContext): Promise<AiUpdate
       const lastUserMessage = context.lastUserMessage || '';
       const lastJarvisResponse = context.lastJarvisResponse || '';
       
-      // Identify step based on message content
-      let stepIndex: number | null = null;
-      let summary = "";
+      // Check if Jarvis asked about moving to next step and user confirmed
+      const askedToAdvance = lastJarvisResponse.includes("podemos avançar para a próxima") || 
+                            lastJarvisResponse.includes("Gostaria de revisar ou modificar algo");
+      const userWantsToAdvance = askedToAdvance && (
+        lastUserMessage.toLowerCase().includes("sim") ||
+        lastUserMessage.toLowerCase().includes("pode") ||
+        lastUserMessage.toLowerCase().includes("vamos") ||
+        lastUserMessage.toLowerCase().includes("próxim") ||
+        lastUserMessage.toLowerCase().includes("avance") ||
+        lastUserMessage.toLowerCase().includes("avançar") ||
+        !lastUserMessage.toLowerCase().includes("não") // Simplified logic for demo purposes
+      );
       
-      // Step 0: Expert Profile
-      if (lastJarvisResponse.includes("área de especialização") || 
-          lastJarvisResponse.includes("tema principal") || 
-          lastUserMessage.includes("especialização") || 
-          lastUserMessage.includes("saúde") ||
-          lastUserMessage.includes("formação")) {
-        stepIndex = 0;
-        summary = `Especialização em ${lastUserMessage.includes("nutri") ? "nutrição" : "saúde"}. Tema principal relacionado à área de ${lastUserMessage.includes("mental") ? "saúde mental" : "saúde"}. Público-alvo a ser definido durante o desenvolvimento do curso.`;
-      } 
-      // Step 1: Market Analysis
-      else if (lastJarvisResponse.includes("tendências") || 
-              lastJarvisResponse.includes("transformação") ||
-              lastUserMessage.includes("mercado") || 
-              lastUserMessage.includes("tendência") ||
-              lastUserMessage.includes("transformação")) {
-        stepIndex = 1;
-        summary = `5 Tendências de mercado na área da saúde: 1) Telemedicina, 2) Saúde preventiva, 3) Saúde mental, 4) Nutrição funcional, 5) Bem-estar integrado. Foco na transformação prática do aluno com aplicação imediata do conhecimento.`;
+      // Determine next step index (if user confirmed advancing)
+      let stepIndex = context.currentStepIndex;
+      if (userWantsToAdvance && context.currentStepIndex !== undefined && context.currentStepIndex < 5) {
+        stepIndex = context.currentStepIndex + 1;
       }
-      // Step 2: Course Structure
-      else if (lastJarvisResponse.includes("entregar seu curso") || 
-              lastJarvisResponse.includes("tipos de conteúdo") ||
-              lastUserMessage.includes("gravado") || 
-              lastUserMessage.includes("vídeo") ||
-              lastUserMessage.includes("híbrido")) {
-        stepIndex = 2;
-        summary = `Curso em formato ${lastUserMessage.includes("gravado") ? "gravado" : lastUserMessage.includes("híbrido") ? "híbrido" : "ao vivo"}. Conteúdo inclui vídeos, estudos de caso e exercícios práticos. Nível ${lastUserMessage.includes("avançado") ? "avançado" : lastUserMessage.includes("intermediário") ? "intermediário" : "básico"}.`;
+      
+      // Identify step based on message content if no current step
+      if (stepIndex === undefined) {
+        // Step 0: Expert Profile
+        if (lastJarvisResponse.includes("área de especialização") || 
+            lastJarvisResponse.includes("tema principal") || 
+            lastUserMessage.includes("especialização") || 
+            lastUserMessage.includes("saúde") ||
+            lastUserMessage.includes("formação")) {
+          stepIndex = 0;
+        } 
+        // Step 1: Market Analysis
+        else if (lastJarvisResponse.includes("tendências") || 
+                lastJarvisResponse.includes("transformação") ||
+                lastUserMessage.includes("mercado") || 
+                lastUserMessage.includes("tendência") ||
+                lastUserMessage.includes("transformação")) {
+          stepIndex = 1;
+        }
+        // Step 2: Course Structure
+        else if (lastJarvisResponse.includes("entregar seu curso") || 
+                lastJarvisResponse.includes("tipos de conteúdo") ||
+                lastUserMessage.includes("gravado") || 
+                lastUserMessage.includes("vídeo") ||
+                lastUserMessage.includes("híbrido")) {
+          stepIndex = 2;
+        }
+        // Step 3: Methodology
+        else if (lastJarvisResponse.includes("método de ensino") || 
+                lastJarvisResponse.includes("etapas principais") ||
+                lastUserMessage.includes("método") || 
+                lastUserMessage.includes("etapas") ||
+                lastUserMessage.includes("metodologia")) {
+          stepIndex = 3;
+        }
+        // Step 4: Modular Structure
+        else if (lastJarvisResponse.includes("dividiria o conteúdo") || 
+                lastJarvisResponse.includes("módulos e aulas") ||
+                lastUserMessage.includes("módulo") || 
+                lastUserMessage.includes("aula") ||
+                lastUserMessage.includes("estrutura")) {
+          stepIndex = 4;
+        }
+        // Step 5: Final Visualization
+        else if (lastJarvisResponse.includes("revisar a estrutura") || 
+                lastJarvisResponse.includes("pronto para publicar") ||
+                lastUserMessage.includes("revisar") || 
+                lastUserMessage.includes("publicar") ||
+                lastUserMessage.includes("finalizar")) {
+          stepIndex = 5;
+        }
       }
-      // Step 3: Methodology
-      else if (lastJarvisResponse.includes("método de ensino") || 
-              lastJarvisResponse.includes("etapas principais") ||
-              lastUserMessage.includes("método") || 
-              lastUserMessage.includes("etapas") ||
-              lastUserMessage.includes("metodologia")) {
-        stepIndex = 3;
-        summary = `Metodologia baseada em ${lastUserMessage.includes("5") ? "5" : lastUserMessage.includes("3") ? "3" : "4"} etapas principais. Abordagem prática com foco na aplicação do conhecimento. Método personalizado com etapas sequenciais e lógicas para o aprendizado progressivo.`;
-      }
-      // Step 4: Modular Structure
-      else if (lastJarvisResponse.includes("dividiria o conteúdo") || 
-              lastJarvisResponse.includes("módulos e aulas") ||
-              lastUserMessage.includes("módulo") || 
-              lastUserMessage.includes("aula") ||
-              lastUserMessage.includes("estrutura")) {
-        stepIndex = 4;
-        summary = `Estrutura modular com ${lastUserMessage.includes("4") ? "4" : "3"} módulos principais. Cada módulo contém capítulos e aulas organizados progressivamente. Aulas com duração média de 15-20 minutos e conteúdos práticos para aplicação imediata.`;
-      }
-      // Step 5: Final Visualization
-      else if (lastJarvisResponse.includes("revisar a estrutura") || 
-              lastJarvisResponse.includes("pronto para publicar") ||
-              lastUserMessage.includes("revisar") || 
-              lastUserMessage.includes("publicar") ||
-              lastUserMessage.includes("finalizar")) {
-        stepIndex = 5;
-        summary = `Curso completo estruturado na área da saúde, pronto para publicação. Estrutura de módulos definida com metodologia clara e aulas práticas. Carga horária total estimada em 20 horas com certificação para os alunos.`;
+      
+      let summary = "";
+      if (stepIndex !== null && stepIndex !== undefined) {
+        // Generate appropriate fallback summary for the identified step
+        switch (stepIndex) {
+          case 0:
+            summary = `Especialização em ${lastUserMessage.includes("nutri") ? "nutrição" : "saúde"}. Tema principal relacionado à área de ${lastUserMessage.includes("mental") ? "saúde mental" : "saúde"}. Público-alvo a ser definido durante o desenvolvimento do curso.`;
+            break;
+          case 1:
+            summary = `5 Tendências de mercado na área da saúde: 1) Telemedicina, 2) Saúde preventiva, 3) Saúde mental, 4) Nutrição funcional, 5) Bem-estar integrado. Foco na transformação prática do aluno com aplicação imediata do conhecimento.`;
+            break;
+          case 2:
+            summary = `Curso em formato ${lastUserMessage.includes("gravado") ? "gravado" : lastUserMessage.includes("híbrido") ? "híbrido" : "ao vivo"}. Conteúdo inclui vídeos, estudos de caso e exercícios práticos. Nível ${lastUserMessage.includes("avançado") ? "avançado" : lastUserMessage.includes("intermediário") ? "intermediário" : "básico"}.`;
+            break;
+          case 3:
+            summary = `Metodologia baseada em ${lastUserMessage.includes("5") ? "5" : lastUserMessage.includes("3") ? "3" : "4"} etapas principais. Abordagem prática com foco na aplicação do conhecimento. Método personalizado com etapas sequenciais e lógicas para o aprendizado progressivo.`;
+            break;
+          case 4:
+            summary = `Estrutura modular com ${lastUserMessage.includes("4") ? "4" : "3"} módulos principais. Cada módulo contém capítulos e aulas organizados progressivamente. Aulas com duração média de 15-20 minutos e conteúdos práticos para aplicação imediata.`;
+            break;
+          case 5:
+            summary = `Curso completo estruturado na área da saúde, pronto para publicação. Estrutura de módulos definida com metodologia clara e aulas práticas. Carga horária total estimada em 20 horas com certificação para os alunos.`;
+            break;
+        }
       }
       
       resolve({

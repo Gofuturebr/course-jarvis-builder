@@ -24,6 +24,14 @@ export const getSuggestions = (currentStepIndex: number, stepsQuestions: any): s
   const currentStep = stepsQuestions[currentStepIndex as keyof typeof stepsQuestions];
   if (!currentStep) return [];
   
+  // Check if we should offer "move to next step" options
+  if (currentStep.showAdvanceOptions) {
+    return [
+      "Sim, vamos avançar para a próxima etapa",
+      "Não, quero modificar esta etapa"
+    ];
+  }
+  
   return currentStep.questions.map((q: string) => {
     const suggestion = q.replace(/[?]/g, '').substring(0, 30);
     return suggestion.length > 25 ? `${suggestion}...` : suggestion;

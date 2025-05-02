@@ -26,6 +26,7 @@ export default function ChatPanel() {
   ]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0); // Track current step
+  const [isStepTransition, setIsStepTransition] = useState(false);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const updateCourseMutation = useUpdateCourseStepMutation();
   
@@ -35,6 +36,22 @@ export default function ChatPanel() {
       lastMessageRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
+
+  // Update step transition status when needed
+  useEffect(() => {
+    if (messages.length >= 2) {
+      const lastMessage = messages[messages.length - 1];
+      // Check if the last message from Jarvis contains the transition question
+      if (lastMessage.role === 'jarvis' && 
+          (lastMessage.content.includes("Gostaria de revisar ou modificar algo") || 
+           lastMessage.content.includes("podemos avançar para a próxima"))) {
+        setIsStepTransition(true);
+      } else if (isStepTransition && lastMessage.role === 'user') {
+        // Reset after the user has responded to the transition question
+        setIsStepTransition(false);
+      }
+    }
+  }, [messages, isStepTransition]);
 
   const handleSendMessage = async (inputValue: string) => {
     if (!inputValue.trim() || isProcessing) return;
@@ -74,6 +91,7 @@ export default function ChatPanel() {
           if (data.stepIndex !== null && data.stepIndex !== currentStepIndex) {
             // Update current step if changed
             setCurrentStepIndex(data.stepIndex);
+            console.log(`Step updated from ${currentStepIndex} to ${data.stepIndex}`);
           }
         }
       });
@@ -95,7 +113,14 @@ export default function ChatPanel() {
     handleSendMessage(suggestion);
   };
 
-  const suggestions = getSuggestions(currentStepIndex, stepsQuestions);
+  // Get step-specific suggestions or transition options
+  const suggestions = getSuggestions(currentStepIndex, {
+    ...stepsQuestions,
+    [currentStepIndex]: {
+      ...stepsQuestions[currentStepIndex as keyof typeof stepsQuestions],
+      showAdvanceOptions: isStepTransition
+    }
+  });
 
   return (
     <div className="flex flex-col h-full bg-white">
